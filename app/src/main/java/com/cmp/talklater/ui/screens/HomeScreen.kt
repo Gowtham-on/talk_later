@@ -69,6 +69,7 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
             runCallLogWorkerOnce(context)
         }
     }
+
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
@@ -80,7 +81,8 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
         }
     ) { padding ->
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Text(
                 "Talk Later",

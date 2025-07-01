@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:name=".MainApplication"
@@ -25,10 +26,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".AddNotesActivity"
+            android:theme="@style/Theme.YourApp.BottomSheet"
+            android:exported="true"/>
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="com.cmp.talklater.androidx-startup"
             tools:node="remove" />
+        <receiver android:name=".broadcast.NotificationActionReceiver" android:exported="false"/>
+
     </application>
 
 </manifest>

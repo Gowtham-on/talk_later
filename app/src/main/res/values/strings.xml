@@ -8,4 +8,5 @@
     <string name="privacy">Privacy</string>
     <string name="about">About</string>
     <string name="call_back">Call Back</string>
+    <string name="permissions">Permissions</string>
 </resources>

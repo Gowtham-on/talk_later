@@ -1,5 +1,6 @@
 package com.cmp.talklater.ui.screens
 
+import android.Manifest
 import android.content.pm.PackageManager
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,16 +36,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.AppHeader
+import com.cmp.talklater.ui.components.ToggleSwitch
 import com.cmp.talklater.util.AppUtils
+import com.cmp.talklater.util.AppUtils.openAppSettings
+import com.cmp.talklater.util.AppUtils.openNotificationSettings
 import com.cmp.talklater.util.ThemeUtil
 import com.cmp.talklater.viewmodel.MainViewmodel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 
 @Composable
 fun SettingsScreen(mainViewmodel: MainViewmodel = hiltViewModel(), onBack: () -> Unit) {
@@ -61,7 +69,7 @@ fun SettingsScreen(mainViewmodel: MainViewmodel = hiltViewModel(), onBack: () ->
             Spacer(Modifier.padding(vertical = 5.dp))
             GetThemeChangeSection(mainViewmodel)
             Spacer(Modifier.padding(vertical = 15.dp))
-            GetReminderSection()
+            GetPermissionScreen()
             Spacer(Modifier.padding(vertical = 15.dp))
             GetPrivacySection()
             Spacer(Modifier.padding(vertical = 15.dp))
@@ -153,6 +161,70 @@ fun GetReminderSection() {
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun GetPermissionScreen() {
+    val context = LocalContext.current
+    val callPermission = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
+    val notificationPermission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
+    Column {
+        Text(
+            text = stringResource(R.string.permissions),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.W600
+        )
+        Spacer(Modifier.height(10.dp))
+        PermissionToggleRow(
+            label = "Call Log Permission",
+            isGranted = callPermission.status.isGranted,
+            onRequest = {
+                if (callPermission.status.shouldShowRationale)
+                    callPermission.launchPermissionRequest()
+                else openAppSettings(context)
+            },
+            openSettings = { openAppSettings(context) }
+        )
+        Spacer(Modifier.height(10.dp))
+        PermissionToggleRow(
+            label = "Post Notification",
+            isGranted = notificationPermission.status.isGranted,
+            onRequest = {
+                if (notificationPermission.status.shouldShowRationale)
+                    notificationPermission.launchPermissionRequest()
+                else openNotificationSettings(
+                    context
+                )
+            },
+            openSettings = { openNotificationSettings(context) }
+        )
+    }
+}
+
+@Composable
+private fun PermissionToggleRow(
+    label: String,
+    isGranted: Boolean,
+    onRequest: () -> Unit,
+    openSettings: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.width(50.dp))
+        ToggleSwitch(
+            checked = isGranted,
+            onCheckedChange = {
+                if (!isGranted) onRequest() else openSettings()
+            },
+            checkedTrackColor = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
 @Composable
 fun GetPrivacySection() {
     Text(
@@ -200,24 +272,24 @@ fun GetAboutSection() {
     )
     Spacer(Modifier.height(10.dp))
     if (!versionName.isBlank())
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 10.dp)
-    ) {
-        val context = LocalContext.current
-        Text(
-            "Version",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
-        )
-        Text(
-            versionName,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
-        )
-    }
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp)
+        ) {
+            val context = LocalContext.current
+            Text(
+                "Version",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                versionName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+        }
 
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,

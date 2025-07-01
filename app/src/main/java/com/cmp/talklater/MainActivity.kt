@@ -27,7 +27,6 @@ import com.cmp.talklater.ui.screens.SettingsScreen
 import com.cmp.talklater.ui.theme.TalkLaterTheme
 import com.cmp.talklater.viewmodel.MainViewmodel
 import com.cmp.talklater.worker.CallLogWorker
-import com.cmp.talklater.worker.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dagger.hilt.android.AndroidEntryPoint
 
