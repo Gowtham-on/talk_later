@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">TalkLater</string>
+    <string name="permission_desc">To remind you about calls, we need access to your contacts and call logs. This allows us to identify who you\'re calling and when.</string>
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="reminders">Reminders</string>
+    <string name="default_reminder_time">Default reminder time</string>
+    <string name="privacy">Privacy</string>
+    <string name="about">About</string>
+    <string name="call_back">Call Back</string>
+</resources>
