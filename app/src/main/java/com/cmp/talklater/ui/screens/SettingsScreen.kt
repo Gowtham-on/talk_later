@@ -1,6 +1,7 @@
 package com.cmp.talklater.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.AppHeader
@@ -314,6 +316,10 @@ fun GetAboutSection() {
 
 @Composable
 fun GetThemeItem(type: ThemeUtil, mainViewmodel: MainViewmodel) {
+    val context = LocalContext.current
+
+    val prefs = context.getSharedPreferences("theme_pref", Context.MODE_PRIVATE)
+
     val themeText = remember {
         mutableStateOf(
             when (type) {
@@ -332,6 +338,7 @@ fun GetThemeItem(type: ThemeUtil, mainViewmodel: MainViewmodel) {
                 color = MaterialTheme.colorScheme.secondary
             )
             .clickable {
+                prefs.edit { putString("theme", type.name) }
                 when (type) {
                     ThemeUtil.LIGHT -> mainViewmodel.setCurrentTheme(ThemeUtil.LIGHT)
                     ThemeUtil.DARK -> mainViewmodel.setCurrentTheme(ThemeUtil.DARK)

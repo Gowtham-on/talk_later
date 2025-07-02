@@ -11,7 +11,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewmodel @Inject constructor() : ViewModel() {
 
-    var theme by mutableStateOf(ThemeUtil.SYSTEM)
+    var theme: ThemeUtil? by mutableStateOf(null)
         private set
 
     fun setCurrentTheme(theme: ThemeUtil) {

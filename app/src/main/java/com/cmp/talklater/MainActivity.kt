@@ -25,6 +25,7 @@ import com.cmp.talklater.ui.screens.HomeScreen
 import com.cmp.talklater.ui.screens.PermissionScreen
 import com.cmp.talklater.ui.screens.SettingsScreen
 import com.cmp.talklater.ui.theme.TalkLaterTheme
+import com.cmp.talklater.util.ThemeUtil
 import com.cmp.talklater.viewmodel.MainViewmodel
 import com.cmp.talklater.worker.CallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -40,9 +41,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val prefs = this.getSharedPreferences("theme_pref", MODE_PRIVATE)
+        var theme = ThemeUtil.valueOf(prefs.getString("theme", ThemeUtil.SYSTEM.name).toString())
+
         setContent {
+
             val mainViewmodel: MainViewmodel = hiltViewModel()
-            val theme = mainViewmodel.theme
+            if (mainViewmodel.theme != null) {
+                theme = mainViewmodel.theme!!
+            } else {
+                mainViewmodel.setCurrentTheme(theme)
+            }
+
             TalkLaterTheme(theme = theme) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Surface(
