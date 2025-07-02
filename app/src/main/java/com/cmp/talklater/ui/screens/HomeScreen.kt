@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,7 +54,7 @@ import com.cmp.talklater.util.TimeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
-import com.cmp.talklater.worker.scheduleCallLogWorker
+import com.cmp.talklater.worker.scheduler.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -83,7 +84,6 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
     LaunchedEffect(permissionState.status) {
         if (permissionState.status.isGranted) {
             postNotificationState.launchPermissionRequest()
-            runCallLogWorkerOnce(context)
         }
     }
 
@@ -129,7 +129,8 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
                             } else {
                                 viewModel.setListViewType(ViewType.EXPANDED)
                             }
-                        })
+                        }),
+                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.inverseSurface),
                 )
             }
             Spacer(Modifier.height(25.dp))

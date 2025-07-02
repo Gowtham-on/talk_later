@@ -1,7 +1,9 @@
-package com.cmp.talklater.worker
+package com.cmp.talklater.worker.scheduler
 
 import android.content.Context
 import androidx.work.*
+import com.cmp.talklater.worker.ReminderNotificationWorker
+import java.util.concurrent.TimeUnit
 
 fun scheduleReminderNotification(
     context: Context,
@@ -18,7 +20,7 @@ fun scheduleReminderNotification(
         "number" to number
     )
     val request = OneTimeWorkRequestBuilder<ReminderNotificationWorker>()
-        .setInitialDelay(delayInMinutes.toLong(), java.util.concurrent.TimeUnit.MINUTES)
+        .setInitialDelay(delayInMinutes.toLong(), TimeUnit.MINUTES)
         .setInputData(data)
         .build()
 

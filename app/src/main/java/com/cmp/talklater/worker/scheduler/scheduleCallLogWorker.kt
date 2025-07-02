@@ -1,8 +1,10 @@
-package com.cmp.talklater.worker
+package com.cmp.talklater.worker.scheduler
 
 import android.content.Context
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.cmp.talklater.worker.CallLogWorker
 import java.util.concurrent.TimeUnit
 
 fun scheduleCallLogWorker(context: Context) {
@@ -12,7 +14,7 @@ fun scheduleCallLogWorker(context: Context) {
 
     WorkManager.getInstance(context).enqueueUniquePeriodicWork(
         "call_log_worker",
-        androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.KEEP,
         workRequest
     )
 }

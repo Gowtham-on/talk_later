@@ -28,6 +28,7 @@ import com.cmp.talklater.ui.theme.TalkLaterTheme
 import com.cmp.talklater.util.ThemeUtil
 import com.cmp.talklater.viewmodel.MainViewmodel
 import com.cmp.talklater.worker.CallLogWorker
+import com.cmp.talklater.worker.scheduler.scheduleDeleteContactsWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val prefs = this.getSharedPreferences("theme_pref", MODE_PRIVATE)
         var theme = ThemeUtil.valueOf(prefs.getString("theme", ThemeUtil.SYSTEM.name).toString())
+        scheduleDeleteContactsWorker(this)
 
         setContent {
 

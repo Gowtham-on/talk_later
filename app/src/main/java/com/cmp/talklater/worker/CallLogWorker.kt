@@ -24,9 +24,6 @@ class CallLogWorker @AssistedInject constructor(
         val prefs = applicationContext.getSharedPreferences("call_log_prefs", Context.MODE_PRIVATE)
         val lastChecked = prefs.getLong("last_checked", 0L)
 
-        val now = System.currentTimeMillis()
-        val yesterday = now - 24 * 60 * 60 * 1000
-
         val uri = CallLog.Calls.CONTENT_URI
         val selection =
             "(${CallLog.Calls.TYPE}=? OR ${CallLog.Calls.TYPE}=?) AND ${CallLog.Calls.DATE} > ?"

@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.cmp.talklater.ui.components.AddNotesBottomSheet
 import com.cmp.talklater.ui.theme.TalkLaterTheme
 import com.cmp.talklater.util.ThemeUtil
-import com.cmp.talklater.worker.scheduleReminderNotification
+import com.cmp.talklater.worker.scheduler.scheduleReminderNotification
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
