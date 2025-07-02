@@ -1,6 +1,5 @@
 package com.cmp.talklater
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,8 +17,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.cmp.talklater.route.Screen
 import com.cmp.talklater.ui.screens.HomeScreen
 import com.cmp.talklater.ui.screens.PermissionScreen
@@ -27,15 +24,9 @@ import com.cmp.talklater.ui.screens.SettingsScreen
 import com.cmp.talklater.ui.theme.TalkLaterTheme
 import com.cmp.talklater.util.ThemeUtil
 import com.cmp.talklater.viewmodel.MainViewmodel
-import com.cmp.talklater.worker.CallLogWorker
 import com.cmp.talklater.worker.scheduler.scheduleDeleteContactsWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import dagger.hilt.android.AndroidEntryPoint
-
-fun runCallLogWorkerOnce(context: Context) {
-    val workRequest = OneTimeWorkRequestBuilder<CallLogWorker>().build()
-    WorkManager.getInstance(context).enqueue(workRequest)
-}
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
