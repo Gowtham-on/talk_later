@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "25a9c0df727aaa0c5e498b24acc5a00f",
+    "identityHash": "234672bbf2457aa4d3fccaefd9763ebf",
     "entities": [
       {
         "tableName": "contacts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `number` TEXT NOT NULL, `time` TEXT NOT NULL, `type` INTEGER NOT NULL, `notes` TEXT, PRIMARY KEY(`name`, `number`, `time`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `number` TEXT NOT NULL, `time` TEXT NOT NULL, `type` INTEGER NOT NULL, `notes` TEXT, `count` INTEGER NOT NULL, PRIMARY KEY(`name`, `number`, `time`))",
         "fields": [
           {
             "fieldPath": "name",
@@ -36,6 +36,12 @@
             "fieldPath": "notes",
             "columnName": "notes",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -50,7 +56,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '25a9c0df727aaa0c5e498b24acc5a00f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '234672bbf2457aa4d3fccaefd9763ebf')"
     ]
   }
 }

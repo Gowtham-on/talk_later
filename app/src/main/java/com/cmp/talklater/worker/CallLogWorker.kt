@@ -52,6 +52,8 @@ class CallLogWorker @AssistedInject constructor(
             "${CallLog.Calls.DATE} DESC"
         )
 
+        var calls = arrayListOf<ContactInfo>()
+
         cursor?.use {
             while (it.moveToNext()) {
                 val number = it.getString(it.getColumnIndexOrThrow(CallLog.Calls.NUMBER))
@@ -59,26 +61,40 @@ class CallLogWorker @AssistedInject constructor(
                 val name = it.getString(it.getColumnIndexOrThrow(CallLog.Calls.CACHED_NAME))
                 val type = it.getInt(it.getColumnIndexOrThrow(CallLog.Calls.TYPE))
 
-                val displayName = if (name.isBlank()) number else name
-
                 val info = ContactInfo(
                     name = name,
                     number = number,
                     time = date.toString(),
                     type = type,
-                    notes = null
+                    notes = null,
                 )
-
-                triggerNotification(
-                    context = appContext,
-                    "Missed call from $displayName",
-                    "$number",
-                    notificationId = it.position,
-                    info = info
-                )
-
                 repository.addContact(info)
+                calls.add(info)
             }
+        }
+
+        val grouped = calls.groupBy { it.number to it.type }
+
+        grouped.forEach { (key, list) ->
+            val (number, type) = key
+            val count = list.size
+            val info = list.first() // Use the first for display (you could use last, or get the latest name)
+            val displayName = if (info.name.isBlank()) info.number else info.name
+            val displayType = if (type == CallLog.Calls.MISSED_TYPE) "Missed" else "Rejected"
+
+            val notifTitle = if (count > 1) {
+                "$displayType call from $displayName ($count)"
+            } else {
+                "$displayType call from $displayName"
+            }
+
+            triggerNotification(
+                context = appContext,
+                title = notifTitle,
+                message = number,
+                notificationId = number.hashCode(),
+                info = info
+            )
         }
 
         val newLastChecked = System.currentTimeMillis()

@@ -10,5 +10,6 @@ data class ContactInfo(
     val number: String,
     val time: String,
     val type: Int,
-    val notes: String?
+    val notes: String?,
+    var count: Int = 1
 )

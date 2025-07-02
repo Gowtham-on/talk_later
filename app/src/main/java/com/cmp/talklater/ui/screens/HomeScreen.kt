@@ -56,6 +56,7 @@ import java.util.Date
 fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: () -> Unit) {
     val contacts by viewModel.contacts.collectAsState()
     val permissionState = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
+    val postNotificationState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
     val context = LocalContext.current
 
@@ -66,6 +67,7 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
 
     LaunchedEffect(permissionState.status) {
         if (permissionState.status.isGranted) {
+            postNotificationState.launchPermissionRequest()
             runCallLogWorkerOnce(context)
         }
     }

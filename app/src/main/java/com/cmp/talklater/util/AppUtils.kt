@@ -14,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.cmp.talklater.AddNotesActivity
+import com.cmp.talklater.R
 import com.cmp.talklater.broadcast.NotificationActionReceiver
 import com.cmp.talklater.model.ContactInfo
 
@@ -54,7 +55,6 @@ object AppUtils {
     }
 
     const val ACTION_ANSWERED = "com.cmp.talklater.ACTION_ANSWERED"
-    const val ACTION_ADD_NOTES = "com.cmp.talklater.ACTION_ADD_NOTES"
 
     fun triggerNotification(
         context: Context,
@@ -76,30 +76,33 @@ object AppUtils {
             manager.createNotificationChannel(channel)
         }
 
-        val answeredIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = ACTION_ANSWERED
-            putExtra("notificationId", notificationId)
-        }
-        val answeredPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            answeredIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        /** Notification actions can be used later */
+//        val answeredIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+//            action = ACTION_ANSWERED
+//            putExtra("notificationId", notificationId)
+//        }
+//        val answeredPendingIntent = PendingIntent.getBroadcast(
+//            context,
+//            0,
+//            answeredIntent,
+//            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+//        )
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.talk_later_icon_v2)
             .setContentTitle(title)
             .setContentText(message)
             .setAutoCancel(true)
 
         if (!isSnooze) {
             if (info != null) {
+                val callBackPendingIntent = getCallBackPendingIntent(context, info.number)
+                builder.addAction(0, "Call Back", callBackPendingIntent)
+            }
+            if (info != null) {
                 val addNotesPendingIntent = getNotesPendingIntent(context, info, notificationId)
                 builder.addAction(0, "Remind After", addNotesPendingIntent)
             }
-            builder
-                .addAction(0, "Answered", answeredPendingIntent)
         } else {
             if (info != null) {
                 val callBackPendingIntent = getCallBackPendingIntent(context, info.number)
@@ -138,11 +141,11 @@ object AppUtils {
         val addNotesIntent = Intent(context, AddNotesActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
             putExtra("notificationId", notificationId)
-            putExtra("number", info?.number)
-            putExtra("notes", info?.notes)
-            putExtra("name", info?.name)
-            putExtra("type", info?.type)
-            putExtra("time", info?.time)
+            putExtra("number", info.number)
+            putExtra("notes", info.notes)
+            putExtra("name", info.name)
+            putExtra("type", info.type)
+            putExtra("time", info.time)
         }
 
         return PendingIntent.getActivity(
