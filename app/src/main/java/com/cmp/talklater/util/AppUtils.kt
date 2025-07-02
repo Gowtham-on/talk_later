@@ -15,7 +15,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import com.cmp.talklater.AddNotesActivity
 import com.cmp.talklater.R
-import com.cmp.talklater.broadcast.NotificationActionReceiver
 import com.cmp.talklater.model.ContactInfo
 
 object AppUtils {

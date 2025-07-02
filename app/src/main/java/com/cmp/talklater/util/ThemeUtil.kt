@@ -5,3 +5,8 @@ enum class ThemeUtil {
     DARK,
     SYSTEM
 }
+
+enum class ViewType {
+    EXPANDED,
+    COLLAPSE
+}

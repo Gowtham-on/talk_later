@@ -13,3 +13,8 @@ data class ContactInfo(
     val notes: String?,
     var count: Int = 1
 )
+
+
+data class GroupedContactInfo(
+    val listOfContact: List<ContactInfo> = listOf()
+)

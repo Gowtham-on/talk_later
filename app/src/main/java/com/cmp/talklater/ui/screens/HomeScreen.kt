@@ -3,6 +3,7 @@ package com.cmp.talklater.ui.screens
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,10 +33,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -42,8 +47,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cmp.talklater.R
 import com.cmp.talklater.model.ContactInfo
+import com.cmp.talklater.model.GroupedContactInfo
 import com.cmp.talklater.runCallLogWorkerOnce
 import com.cmp.talklater.util.TimeUtil
+import com.cmp.talklater.util.Utils
+import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
 import com.cmp.talklater.worker.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -55,6 +63,9 @@ import java.util.Date
 @Composable
 fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: () -> Unit) {
     val contacts by viewModel.contacts.collectAsState()
+
+    val groupedContacts = remember { mutableStateOf(Utils.getListByGrouping(contacts)) }
+
     val permissionState = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
     val postNotificationState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
@@ -63,6 +74,10 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
     LaunchedEffect(Unit) {
         scheduleCallLogWorker(context)
         permissionState.launchPermissionRequest()
+    }
+
+    LaunchedEffect(contacts) {
+        groupedContacts.value = Utils.getListByGrouping(contacts)
     }
 
     LaunchedEffect(permissionState.status) {
@@ -86,11 +101,37 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                "Talk Later",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Talk Later",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 15.dp)
+                )
+                Image(
+                    painter = painterResource(
+                        if (viewModel.viewType == ViewType.COLLAPSE)
+                            R.drawable.collapse_svg
+                        else
+                            R.drawable.expand_svg
+                    ),
+                    contentDescription = "Content View",
+                    modifier = Modifier
+                        .padding(end = 15.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .size(30.dp)
+                        .align(Alignment.CenterEnd)
+                        .clickable(onClick = {
+                            if (viewModel.viewType == ViewType.EXPANDED) {
+                                viewModel.setListViewType(ViewType.COLLAPSE)
+                            } else {
+                                viewModel.setListViewType(ViewType.EXPANDED)
+                            }
+                        })
+                )
+            }
             Spacer(Modifier.height(25.dp))
             LazyColumn(
                 modifier = Modifier.padding(
@@ -98,16 +139,35 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
                     end = padding.calculateEndPadding(LayoutDirection.Ltr)
                 )
             ) {
-                items(contacts) { contact ->
-                    GetCallItem(contact)
-                }
+                if (viewModel.viewType == ViewType.EXPANDED)
+                    items(contacts) { contact ->
+                        GetCallItem(contact)
+                    }
+                else
+                    items(groupedContacts.value) {
+                        GetGroupedList(it)
+                    }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GetCallItem(info: ContactInfo) {
+fun GetGroupedList(grouped: GroupedContactInfo) {
+    GetCallItem(
+        grouped.listOfContact.first(),
+        grouped.listOfContact.size,
+        grouped.listOfContact
+    )
+}
+
+@Composable
+fun GetCallItem(
+    info: ContactInfo,
+    count: Int? = null,
+    listOfContactInfo: List<ContactInfo>? = null
+) {
     val context = LocalContext.current
     val type = when (info.type) {
         3 -> "Missed Call"
@@ -119,7 +179,7 @@ fun GetCallItem(info: ContactInfo) {
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
         Text(
-            type,
+            if (count != null) "$type ($count)" else type,
             style = MaterialTheme.typography.bodyLarge
         )
         Text(
