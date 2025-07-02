@@ -49,7 +49,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.cmp.talklater.R
 import com.cmp.talklater.model.ContactInfo
 import com.cmp.talklater.model.GroupedContactInfo
-import com.cmp.talklater.runCallLogWorkerOnce
 import com.cmp.talklater.util.TimeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType

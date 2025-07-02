@@ -2,6 +2,7 @@ package com.cmp.talklater.ui.screens
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.AppHeader
@@ -229,6 +231,8 @@ private fun PermissionToggleRow(
 
 @Composable
 fun GetPrivacySection() {
+    val context = LocalContext.current
+
     Text(
         stringResource(R.string.privacy),
         style = MaterialTheme.typography.titleLarge,
@@ -240,7 +244,11 @@ fun GetPrivacySection() {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                onClick = {}
+                onClick = {
+                    val url = "https://talklater-d0cc6.web.app/privacy-policy.html"
+                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
+                    context.startActivity(intent)
+                }
             )
             .padding(vertical = 10.dp)
     ) {
@@ -298,12 +306,51 @@ fun GetAboutSection() {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                onClick = {}
+                onClick = {
+                    val email = "codemobilepros@gmail.com"
+                    val subject = "Talk Later App Support"
+
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = "mailto:$email".toUri()
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                    }
+                    context.startActivity(intent)
+                }
             )
             .padding(vertical = 10.dp)
     ) {
         Text(
             "Contact Support",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = "Open"
+        )
+    }
+
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClick = {
+                    val email = "codemobilepros@gmail.com"
+                    val subject = "Feature Request"
+
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = "mailto:$email".toUri()
+                        putExtra(Intent.EXTRA_SUBJECT, subject)
+                    }
+                    context.startActivity(intent)
+                }
+            )
+            .padding(vertical = 10.dp)
+    ) {
+        Text(
+            "Feature Request / Bug Report",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium
         )
