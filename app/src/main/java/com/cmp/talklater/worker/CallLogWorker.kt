@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters
 import com.cmp.talklater.database.ContactRepository
 import com.cmp.talklater.model.ContactInfo
 import com.cmp.talklater.util.AppUtils.triggerNotification
+import com.cmp.talklater.util.TimeUtil
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -22,7 +23,7 @@ class CallLogWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
 
         val prefs = applicationContext.getSharedPreferences("call_log_prefs", Context.MODE_PRIVATE)
-        val lastChecked = prefs.getLong("last_checked", 0L)
+        val lastChecked = prefs.getLong("last_checked", TimeUtil.getYesterdayMidnightMillis())
 
         val uri = CallLog.Calls.CONTENT_URI
         val selection =

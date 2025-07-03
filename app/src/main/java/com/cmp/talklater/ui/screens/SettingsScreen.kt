@@ -2,8 +2,11 @@ package com.cmp.talklater.ui.screens
 
 import android.Manifest
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.DropdownMenuItem
@@ -31,6 +36,8 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.AppHeader
 import com.cmp.talklater.ui.components.ToggleSwitch
@@ -52,14 +62,23 @@ import com.cmp.talklater.util.AppUtils
 import com.cmp.talklater.util.AppUtils.openAppSettings
 import com.cmp.talklater.util.AppUtils.openNotificationSettings
 import com.cmp.talklater.util.ThemeUtil
+import com.cmp.talklater.util.Utils
+import com.cmp.talklater.viewmodel.ContactViewmodel
 import com.cmp.talklater.viewmodel.MainViewmodel
+import com.cmp.talklater.worker.scheduler.cancelDeleteContactsWorker
+import com.cmp.talklater.worker.scheduler.isDeleteContactsWorkerActive
+import com.cmp.talklater.worker.scheduler.scheduleDeleteContactsWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 
 @Composable
-fun SettingsScreen(mainViewmodel: MainViewmodel = hiltViewModel(), onBack: () -> Unit) {
+fun SettingsScreen(
+    mainViewmodel: MainViewmodel = hiltViewModel(),
+    contactViewmodel: ContactViewmodel = hiltViewModel(),
+    onBack: () -> Unit
+) {
     Column {
         AppHeader(
             title = stringResource(R.string.settings),
@@ -68,16 +87,91 @@ fun SettingsScreen(mainViewmodel: MainViewmodel = hiltViewModel(), onBack: () ->
         )
 
         Column(
-            modifier = Modifier.padding(horizontal = 17.dp)
+            modifier = Modifier
+                .padding(horizontal = 17.dp)
+                .verticalScroll(state = rememberScrollState())
         ) {
             Spacer(Modifier.padding(vertical = 5.dp))
             GetThemeChangeSection(mainViewmodel)
+            Spacer(Modifier.padding(vertical = 15.dp))
+            GetClearLogRow(contactViewmodel, onBack)
             Spacer(Modifier.padding(vertical = 15.dp))
             GetPermissionScreen()
             Spacer(Modifier.padding(vertical = 15.dp))
             GetPrivacySection()
             Spacer(Modifier.padding(vertical = 15.dp))
             GetAboutSection()
+            Spacer(Modifier.padding(vertical = 15.dp))
+        }
+    }
+}
+
+@Composable
+fun GetClearLogRow(contactViewmodel: ContactViewmodel, onBack: () -> Unit) {
+
+    val context = LocalContext.current
+
+    var isWorkerActive by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(Unit) {
+        isDeleteContactsWorkerActive(context) {
+            isWorkerActive = it
+        }
+    }
+
+    LaunchedEffect(isWorkerActive) {
+        val prefs = context.getSharedPreferences("app_util", MODE_PRIVATE)
+        prefs.edit { putBoolean("is_worker_active", isWorkerActive) }
+    }
+
+    Column {
+        Text(
+            text = "Logs",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.W600
+        )
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Delete Log Everyday", style = MaterialTheme.typography.bodyLarge)
+            Spacer(Modifier.width(50.dp))
+            ToggleSwitch(
+                checked = isWorkerActive,
+                onCheckedChange = {
+                    if (isWorkerActive) cancelDeleteContactsWorker(context)
+                    else scheduleDeleteContactsWorker(context)
+                },
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                uncheckedTrackColor = MaterialTheme.colorScheme.secondary
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClick = {
+                        contactViewmodel.deleteAllContacts()
+                        onBack()
+                    }
+                )
+                .padding(vertical = 10.dp)
+        ) {
+            Text(
+                "Clear All Logs",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Open"
+            )
         }
     }
 }
@@ -171,6 +265,7 @@ fun GetPermissionScreen() {
     val context = LocalContext.current
     val callPermission = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
     val notificationPermission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    var isOptDisabled by remember { mutableStateOf(Utils.isBatteryOptimizationDisabled(context)) }
 
     Column {
         Text(
@@ -178,6 +273,7 @@ fun GetPermissionScreen() {
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.W600
         )
+
         Spacer(Modifier.height(10.dp))
         PermissionToggleRow(
             label = "Call Log Permission",
@@ -202,6 +298,50 @@ fun GetPermissionScreen() {
             },
             openSettings = { openNotificationSettings(context) }
         )
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Battery Optimization", style = MaterialTheme.typography.bodyLarge)
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    "Disable battery optimization to receive reminders on time.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Spacer(Modifier.width(50.dp))
+            ToggleSwitch(
+                checked = isOptDisabled,
+                onCheckedChange = {
+                    if (isOptDisabled) {
+                        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                        context.startActivity(intent)
+                    } else {
+                        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        intent.data = "package:${context.packageName}".toUri()
+                        context.startActivity(intent)
+                    }
+
+                },
+                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                uncheckedTrackColor = MaterialTheme.colorScheme.secondary
+            )
+        }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isOptDisabled = Utils.isBatteryOptimizationDisabled(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 }
 
@@ -224,7 +364,9 @@ private fun PermissionToggleRow(
             onCheckedChange = {
                 if (!isGranted) onRequest() else openSettings()
             },
-            checkedTrackColor = MaterialTheme.colorScheme.primary
+            checkedTrackColor = MaterialTheme.colorScheme.primary,
+            uncheckedTrackColor = MaterialTheme.colorScheme.secondary
+
         )
     }
 }

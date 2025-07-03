@@ -1,8 +1,10 @@
 package com.cmp.talklater.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -35,9 +39,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -46,18 +52,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.cmp.talklater.R
 import com.cmp.talklater.model.ContactInfo
 import com.cmp.talklater.model.GroupedContactInfo
+import com.cmp.talklater.ui.components.ActionIcon
+import com.cmp.talklater.ui.components.SwipeableItemsWithAction
 import com.cmp.talklater.util.TimeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
+import com.cmp.talklater.worker.CallLogWorker
 import com.cmp.talklater.worker.scheduler.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.util.Date
+
+fun runOneTimeRequest(context: Context) {
+    val request = OneTimeWorkRequestBuilder<CallLogWorker>().build()
+    WorkManager.getInstance(context).enqueue(request)
+}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -73,6 +89,7 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
 
     LaunchedEffect(Unit) {
         scheduleCallLogWorker(context)
+        runOneTimeRequest(context)
         permissionState.launchPermissionRequest()
     }
 
@@ -100,6 +117,7 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
+            Spacer(Modifier.height(10.dp))
             Box(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     "Talk Later",
@@ -141,11 +159,11 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
             ) {
                 if (viewModel.viewType == ViewType.EXPANDED)
                     items(contacts) { contact ->
-                        GetCallItem(contact)
+                        GetCallItem(contact, viewModel)
                     }
                 else
                     items(groupedContacts.value) {
-                        GetGroupedList(it)
+                        GetGroupedList(it, viewModel)
                     }
             }
         }
@@ -154,27 +172,76 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GetGroupedList(grouped: GroupedContactInfo) {
+fun GetGroupedList(
+    grouped: GroupedContactInfo,
+    viewModel: ContactViewmodel,
+) {
     GetCallItem(
         grouped.listOfContact.first(),
+        viewModel,
         grouped.listOfContact.size,
-        grouped.listOfContact
+        grouped.listOfContact,
     )
 }
 
 @Composable
 fun GetCallItem(
     info: ContactInfo,
+    viewmodel: ContactViewmodel,
     count: Int? = null,
-    listOfContactInfo: List<ContactInfo>? = null
+    listOfContactInfo: List<ContactInfo>? = null,
 ) {
     val context = LocalContext.current
+    var isRevealed by remember { mutableStateOf(false) }
+
+    SwipeableItemsWithAction(
+        onExpanded = {
+            isRevealed = true
+            Utils.vibrate(context)
+        },
+        isRevealed = isRevealed,
+        isSwipeable = listOfContactInfo == null,
+        actions = {
+            ActionViews(viewmodel, info, isRevealed = {
+                isRevealed = false
+            })
+        },
+        content = {
+            CallItemContent(count, info, context)
+        }
+    )
+    Spacer(Modifier.height(15.dp))
+    Box(
+        modifier = Modifier
+            .height(1.dp)
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
+    ) { }
+    Spacer(Modifier.height(10.dp))
+}
+
+
+fun openDialer(phoneNumber: String, context: android.content.Context) {
+    val dialIntent = Intent(Intent.ACTION_DIAL).apply {
+        data = Uri.parse("tel:$phoneNumber")
+    }
+    context.startActivity(dialIntent)
+}
+
+
+@Composable
+fun CallItemContent(
+    count: Int? = null,
+    info: ContactInfo,
+    context: Context
+) {
     val type = when (info.type) {
         3 -> "Missed Call"
         5 -> "Rejected Call"
         else -> "Unknown"
     }
     val name = if (info.name.isBlank()) "Unknown" else info.name.toString()
+
     Column(
         modifier = Modifier.padding(horizontal = 16.dp)
     ) {
@@ -233,20 +300,23 @@ fun GetCallItem(
             }
         }
     }
-    Spacer(Modifier.height(15.dp))
-    Box(
-        modifier = Modifier
-            .height(1.dp)
-            .fillMaxWidth()
-            .background(color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
-    ) { }
-    Spacer(Modifier.height(10.dp))
 }
 
-
-fun openDialer(phoneNumber: String, context: android.content.Context) {
-    val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-        data = Uri.parse("tel:$phoneNumber")
-    }
-    context.startActivity(dialIntent)
+@Composable
+fun ActionViews(
+    viewmodel: ContactViewmodel,
+    info: ContactInfo,
+    isRevealed: () -> Unit,
+) {
+    ActionIcon(
+        onClick = {
+            viewmodel.deleteContact(info)
+            isRevealed()
+        },
+        backgroundColor = Color.Red,
+        icon = Icons.Default.Delete,
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(150.dp)
+    )
 }

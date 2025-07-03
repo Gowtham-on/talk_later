@@ -17,6 +17,10 @@ class ContactRepository @Inject constructor(
         contactDao.deleteContact(contact)
     }
 
+    suspend fun deleteAllContacts() {
+        contactDao.deleteAllContacts()
+    }
+
     fun getAllContacts(): Flow<List<ContactInfo>> {
         return contactDao.getAllContacts()
     }
