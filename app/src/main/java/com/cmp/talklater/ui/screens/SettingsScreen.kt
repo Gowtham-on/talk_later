@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -126,6 +125,20 @@ fun GetClearLogRow(contactViewmodel: ContactViewmodel, onBack: () -> Unit) {
         prefs.edit { putBoolean("is_worker_active", isWorkerActive) }
     }
 
+    var showDialog by remember { mutableStateOf(false) }
+
+    DeleteLogsAlertDialog(
+        showDialog = showDialog,
+        onConfirm = {
+            contactViewmodel.deleteAllContacts()
+            showDialog = false
+            onBack()
+        },
+        onDismiss = {
+            showDialog = false
+        }
+    )
+
     Column {
         Text(
             text = "Logs",
@@ -136,10 +149,16 @@ fun GetClearLogRow(contactViewmodel: ContactViewmodel, onBack: () -> Unit) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Delete Log Everyday", style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.width(50.dp))
+            Column (
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Delete Log Everyday", style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    "Keep your log list clean by deleting it every midnight.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             ToggleSwitch(
                 checked = isWorkerActive,
                 onCheckedChange = {
@@ -157,8 +176,7 @@ fun GetClearLogRow(contactViewmodel: ContactViewmodel, onBack: () -> Unit) {
                 .fillMaxWidth()
                 .clickable(
                     onClick = {
-                        contactViewmodel.deleteAllContacts()
-                        onBack()
+                        showDialog = true
                     }
                 )
                 .padding(vertical = 10.dp)

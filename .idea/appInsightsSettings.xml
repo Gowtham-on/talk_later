@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.cmp.talklater" />
+                  <option name="mobileSdkAppId" value="1:1036292490467:android:6fe0c7d9c1353ba63d71d6" />
+                  <option name="projectId" value="talklater-d0cc6" />
+                  <option name="projectNumber" value="1036292490467" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

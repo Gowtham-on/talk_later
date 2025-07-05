@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,12 +26,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,11 +51,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import com.cmp.talklater.R
 import com.cmp.talklater.model.ContactInfo
 import com.cmp.talklater.model.GroupedContactInfo
@@ -63,17 +64,17 @@ import com.cmp.talklater.util.TimeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
-import com.cmp.talklater.worker.CallLogWorker
 import com.cmp.talklater.worker.scheduler.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.util.Date
+import androidx.core.net.toUri
 
-fun runOneTimeRequest(context: Context) {
-    val request = OneTimeWorkRequestBuilder<CallLogWorker>().build()
-    WorkManager.getInstance(context).enqueue(request)
-}
+//fun runOneTimeRequest(context: Context) {
+//    val request = OneTimeWorkRequestBuilder<CallLogWorker>().build()
+//    WorkManager.getInstance(context).enqueue(request)
+//}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -89,7 +90,6 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
 
     LaunchedEffect(Unit) {
         scheduleCallLogWorker(context)
-        runOneTimeRequest(context)
         permissionState.launchPermissionRequest()
     }
 
@@ -151,20 +151,46 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
                 )
             }
             Spacer(Modifier.height(25.dp))
-            LazyColumn(
-                modifier = Modifier.padding(
-                    start = padding.calculateStartPadding(LayoutDirection.Ltr),
-                    end = padding.calculateEndPadding(LayoutDirection.Ltr)
-                )
-            ) {
-                if (viewModel.viewType == ViewType.EXPANDED)
-                    items(contacts) { contact ->
-                        GetCallItem(contact, viewModel)
+
+            if (contacts.isEmpty()) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxHeight()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxHeight(fraction = 0.5f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.no_lists_found),
+                            contentDescription = "No Logs Found",
+                            modifier = Modifier
+                                .size(200.dp)
+                        )
+                        Spacer(Modifier.height(5.dp))
+                        Text(
+                            "No call logs yet. \nNew call reminders will appear here.",
+                            textAlign = TextAlign.Center
+                        )
                     }
-                else
-                    items(groupedContacts.value) {
-                        GetGroupedList(it, viewModel)
-                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.padding(
+                        start = padding.calculateStartPadding(LayoutDirection.Ltr),
+                        end = padding.calculateEndPadding(LayoutDirection.Ltr)
+                    )
+                ) {
+                    if (viewModel.viewType == ViewType.EXPANDED)
+                        items(contacts) { contact ->
+                            GetCallItem(contact, viewModel)
+                        }
+                    else
+                        items(groupedContacts.value) {
+                            GetGroupedList(it, viewModel)
+                        }
+                }
             }
         }
     }
@@ -223,7 +249,7 @@ fun GetCallItem(
 
 fun openDialer(phoneNumber: String, context: android.content.Context) {
     val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-        data = Uri.parse("tel:$phoneNumber")
+        data = "tel:$phoneNumber".toUri()
     }
     context.startActivity(dialIntent)
 }
@@ -319,4 +345,29 @@ fun ActionViews(
             .fillMaxHeight()
             .width(150.dp)
     )
+}
+
+@Composable
+fun DeleteLogsAlertDialog(
+    showDialog: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Delete Logs?") },
+            text = { Text("Are you sure you want to delete all call logs? This action cannot be undone.") },
+            confirmButton = {
+                Button(onClick = onConfirm) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }

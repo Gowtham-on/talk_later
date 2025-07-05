@@ -93,7 +93,9 @@ fun App(mainViewmodel: MainViewmodel) {
         }
         composable(Screen.Home.route) {
             HomeScreen(
-                onOpenSettings = { navController.navigate(Screen.Settings.route) }
+                onOpenSettings = {
+                    navController.navigate(Screen.Settings.route)
+                }
             )
         }
         composable(Screen.Settings.route) {

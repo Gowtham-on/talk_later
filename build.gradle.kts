@@ -5,11 +5,13 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ksp) apply false
-
+    id("com.google.gms.google-services") version "4.4.3" apply false
+    id("com.google.firebase.crashlytics") version "3.0.4" apply false
 }
 
 buildscript {
     dependencies {
         classpath (libs.hilt.android.gradle.plugin) // Use latest version
+        classpath(libs.google.services)
     }
 }

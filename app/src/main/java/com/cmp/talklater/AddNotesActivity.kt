@@ -49,7 +49,7 @@ class AddNotesActivity : ComponentActivity() {
                             title = "Call Reminder",
                             message = "Don’t forget to call back $displayName!",
                             notificationId = id,
-                            number = number ?: ""
+                            number = number ?: "",
                         )
                         Toast.makeText(
                             this,

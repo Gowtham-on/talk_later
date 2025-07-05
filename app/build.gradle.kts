@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.room)
     id("org.jetbrains.kotlin.kapt")
     id("dagger.hilt.android.plugin")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -74,9 +76,12 @@ dependencies {
     kapt(libs.hilt.android.compiler)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-    implementation (libs.androidx.work.runtime.ktx)
-    implementation (libs.androidx.hilt.work)
-    implementation( libs.accompanist.permissions)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.firebase.analytics.ktx)
+
 }
 
 room {
