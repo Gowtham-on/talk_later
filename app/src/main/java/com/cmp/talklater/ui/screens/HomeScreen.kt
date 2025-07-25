@@ -64,17 +64,11 @@ import com.cmp.talklater.util.TimeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
-import com.cmp.talklater.worker.scheduler.scheduleCallLogWorker
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.util.Date
 import androidx.core.net.toUri
-
-//fun runOneTimeRequest(context: Context) {
-//    val request = OneTimeWorkRequestBuilder<CallLogWorker>().build()
-//    WorkManager.getInstance(context).enqueue(request)
-//}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -83,25 +77,18 @@ fun HomeScreen(viewModel: ContactViewmodel = hiltViewModel(), onOpenSettings: ()
 
     val groupedContacts = remember { mutableStateOf(Utils.getListByGrouping(contacts)) }
 
-    val permissionState = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
     val postNotificationState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
 
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        scheduleCallLogWorker(context)
-        permissionState.launchPermissionRequest()
+        postNotificationState.launchPermissionRequest()
     }
 
     LaunchedEffect(contacts) {
         groupedContacts.value = Utils.getListByGrouping(contacts)
     }
 
-    LaunchedEffect(permissionState.status) {
-        if (permissionState.status.isGranted) {
-            postNotificationState.launchPermissionRequest()
-        }
-    }
 
     Scaffold(
         floatingActionButton = {

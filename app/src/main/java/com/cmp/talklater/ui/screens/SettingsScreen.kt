@@ -1,6 +1,5 @@
 package com.cmp.talklater.ui.screens
 
-import android.Manifest
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
@@ -58,8 +57,8 @@ import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.AppHeader
 import com.cmp.talklater.ui.components.ToggleSwitch
 import com.cmp.talklater.util.AppUtils
-import com.cmp.talklater.util.AppUtils.openAppSettings
 import com.cmp.talklater.util.AppUtils.openNotificationSettings
+import com.cmp.talklater.util.AppUtils.openNotificationListenerSettings
 import com.cmp.talklater.util.ThemeUtil
 import com.cmp.talklater.util.Utils
 import com.cmp.talklater.viewmodel.ContactViewmodel
@@ -281,8 +280,8 @@ fun GetReminderSection() {
 @Composable
 fun GetPermissionScreen() {
     val context = LocalContext.current
-    val callPermission = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
     val notificationPermission = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+    var isNotificationEnabled by remember { mutableStateOf(Utils.isNotificationServiceEnabled(context)) }
     var isOptDisabled by remember { mutableStateOf(Utils.isBatteryOptimizationDisabled(context)) }
 
     Column {
@@ -294,14 +293,10 @@ fun GetPermissionScreen() {
 
         Spacer(Modifier.height(10.dp))
         PermissionToggleRow(
-            label = "Call Log Permission",
-            isGranted = callPermission.status.isGranted,
-            onRequest = {
-                if (callPermission.status.shouldShowRationale)
-                    callPermission.launchPermissionRequest()
-                else openAppSettings(context)
-            },
-            openSettings = { openAppSettings(context) }
+            label = "Notification Access",
+            isGranted = isNotificationEnabled,
+            onRequest = { openNotificationListenerSettings(context) },
+            openSettings = { openNotificationListenerSettings(context) }
         )
         Spacer(Modifier.height(10.dp))
         PermissionToggleRow(
@@ -356,6 +351,7 @@ fun GetPermissionScreen() {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 isOptDisabled = Utils.isBatteryOptimizationDisabled(context)
+                isNotificationEnabled = Utils.isNotificationServiceEnabled(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
