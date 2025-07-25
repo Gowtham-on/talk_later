@@ -1,12 +1,15 @@
 package com.cmp.talklater.util
 
+import android.content.ComponentName
 import android.content.Context
+import android.provider.Settings
 import android.os.Build
 import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import com.cmp.talklater.model.ContactInfo
 import com.cmp.talklater.model.GroupedContactInfo
+import com.cmp.talklater.service.CallNotificationListenerService
 
 object Utils {
 
@@ -41,5 +44,25 @@ object Utils {
         } else {
             true
         }
+    }
+
+    fun isNotificationServiceEnabled(context: Context): Boolean {
+        val cn = ComponentName(context, CallNotificationListenerService::class.java)
+        val enabled = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        )
+        return enabled?.contains(cn.flattenToString()) == true
+    }
+
+    fun wakeDevice(context: Context, duration: Long = 3000L) {
+        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val wakeLock = pm.newWakeLock(
+            PowerManager.SCREEN_BRIGHT_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+            "TalkLater:WakeLock"
+        )
+        wakeLock.acquire(duration)
+        // The timeout passed to acquire() will automatically release the wake lock
+        // after the specified duration so we don't call release() here.
     }
 }
