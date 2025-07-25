@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import com.cmp.talklater.worker.scheduler.isDeleteContactsWorkerActive
-import com.cmp.talklater.worker.scheduler.scheduleCallLogWorker
 import com.cmp.talklater.worker.scheduler.scheduleDeleteContactsWorker
 
 class BootReceiver : BroadcastReceiver() {
@@ -18,7 +17,6 @@ class BootReceiver : BroadcastReceiver() {
                     scheduleDeleteContactsWorker(context)
                 }
             }
-            scheduleCallLogWorker(context)
         }
     }
 }

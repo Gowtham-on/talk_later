@@ -1,7 +1,8 @@
 package com.cmp.talklater.ui.screens
 
-import android.Manifest
-import androidx.activity.compose.LocalActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -24,32 +26,33 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import com.cmp.talklater.R
 import com.cmp.talklater.ui.components.Button
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import com.mohamedrejeb.calf.permissions.ExperimentalPermissionsApi
+import com.cmp.talklater.util.AppUtils.openNotificationListenerSettings
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 
-@OptIn(ExperimentalPermissionsApi::class,
-    com.google.accompanist.permissions.ExperimentalPermissionsApi::class
-)
 @Composable
 fun PermissionScreen(onPermissionGranted: () -> Unit, onPermissionDenied: () -> Unit) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val imageHeight = screenHeight * 0.65f
-    val permissionState = rememberPermissionState(Manifest.permission.READ_CALL_LOG)
+    val context = LocalContext.current
+    var isEnabled by remember { mutableStateOf(Utils.isNotificationServiceEnabled(context)) }
 
-    LaunchedEffect(permissionState.status) {
-        if (permissionState.status.isGranted) {
-            onPermissionGranted()
-        } else if (permissionState.status.shouldShowRationale.not()
-            && !permissionState.status.isGranted
-        ) {
-            onPermissionDenied()
+    LaunchedEffect(isEnabled) {
+        if (isEnabled) onPermissionGranted()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isEnabled = Utils.isNotificationServiceEnabled(context)
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Column(
@@ -87,11 +90,7 @@ fun PermissionScreen(onPermissionGranted: () -> Unit, onPermissionDenied: () -> 
             borderRadius = 12,
             textColor = MaterialTheme.colorScheme.surface,
             onClick = {
-                try {
-                    permissionState.launchPermissionRequest()
-                } catch (e: Exception) {
-                    println()
-                }
+                openNotificationListenerSettings(context)
             }
         )
         Spacer(modifier = Modifier.height(10.dp))

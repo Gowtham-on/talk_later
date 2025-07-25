@@ -53,6 +53,11 @@ object AppUtils {
         context.startActivity(intent)
     }
 
+    fun openNotificationListenerSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+        context.startActivity(intent)
+    }
+
     const val ACTION_ANSWERED = "com.cmp.talklater.ACTION_ANSWERED"
 
     fun triggerNotification(
