@@ -3,7 +3,6 @@ package com.cmp.talklater.ui.screens
 import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -65,7 +64,6 @@ import com.cmp.talklater.util.Utils
 import com.cmp.talklater.util.ViewType
 import com.cmp.talklater.viewmodel.ContactViewmodel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.util.Date
 import androidx.core.net.toUri
@@ -213,9 +211,9 @@ fun GetCallItem(
             Utils.vibrate(context)
         },
         isRevealed = isRevealed,
-        isSwipeable = listOfContactInfo == null,
+        isSwipeable = true,
         actions = {
-            ActionViews(viewmodel, info, isRevealed = {
+            ActionViews(viewmodel, info,listOfContactInfo, isRevealed = {
                 isRevealed = false
             })
         },
@@ -319,11 +317,18 @@ fun CallItemContent(
 fun ActionViews(
     viewmodel: ContactViewmodel,
     info: ContactInfo,
+    listOfContactInfo: List<ContactInfo>?,
     isRevealed: () -> Unit,
 ) {
     ActionIcon(
         onClick = {
-            viewmodel.deleteContact(info)
+            if (listOfContactInfo.isNullOrEmpty()) {
+                viewmodel.deleteContact(info)
+            } else {
+                for (contact in listOfContactInfo) {
+                    viewmodel.deleteContact(contact)
+                }
+            }
             isRevealed()
         },
         backgroundColor = Color.Red,

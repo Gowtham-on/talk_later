@@ -1,9 +1,12 @@
 package com.cmp.talklater.service
 
 import android.app.Notification
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.provider.CallLog
+import android.util.Log
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.cmp.talklater.database.ContactRepository
@@ -18,16 +21,22 @@ class CallNotificationListenerService : NotificationListenerService() {
     @Inject
     lateinit var repository: ContactRepository
 
+    val listOfNotificationId = mutableListOf<Long>()
+
+    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val extras = sbn.notification.extras
         val title = extras.getString(Notification.EXTRA_TITLE) ?: ""
         val text = extras.getString(Notification.EXTRA_TEXT) ?: ""
-        if (title.contains("missed call", true)) {
+        val isCall = sbn.notification?.channelId  == "phone_missed_call"
+        Log.d("NotificationListenerLog", "onNotificationPosted: $title $text $isCall ${sbn.postTime}" )
+        if (title.contains("missed call", true) && isCall && !listOfNotificationId.contains(sbn.postTime)) {
+            listOfNotificationId.add(sbn.postTime)
             val number = text
             val info = ContactInfo(
                 name = number,
                 number = number,
-                time = System.currentTimeMillis().toString(),
+                time = sbn.notification.`when`.toString(),
                 type = CallLog.Calls.MISSED_TYPE,
                 notes = null
             )
